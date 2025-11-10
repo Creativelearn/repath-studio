@@ -1,9 +1,9 @@
 name: Web application
 
+# Triggers on push to the main branch and manually via workflow_dispatch
 on:
   push:
     branches: ["main"]
-
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -13,7 +13,6 @@ permissions:
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -32,7 +31,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Prepare java
+      - name: Prepare Java
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
@@ -41,7 +40,7 @@ jobs:
       - name: Typos
         uses: crate-ci/typos@v1.38.1
 
-      - name: Cache clojure dependencies
+      - name: Cache Clojure dependencies
         uses: actions/cache@v4
         with:
           path: |
@@ -52,7 +51,7 @@ jobs:
           key: ${{ runner.os }}-cljdeps-${{ hashFiles('deps.edn') }}
           restore-keys: ${{ runner.os }}-cljdeps-
 
-      - name: Install clojure tools
+      - name: Install Clojure tools
         uses: DeLaGuardo/setup-clojure@13.4
         with:
           cli: 1.12.3.1577
@@ -75,28 +74,21 @@ jobs:
         run: npm run test
 
       - name: Build
+        # Removed SENTRY_DSN environment variable
         run: npm run build
-        env:
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+      # --- GitHub Pages Deployment Steps ---
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
+        # Assuming your build output is located at './resources/public'
         uses: actions/upload-pages-artifact@v4.0.0
         with:
           path: './resources/public'
 
-      - name: Sentry release
-        uses: getsentry/action-release@v3.4
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          environment: 'production'
-          inject: true
-          sourcemaps: './resources'
+      # Removed the Sentry release step entirely
 
       - name: Deploy to GitHub Pages
         id: deployment
